@@ -111,10 +111,8 @@ function bubbles(gid, day, width, height, candidates) {
       let start = t
       do { step_t() } while (t < 2600 && maintain())
       out.push([start, t, b])
-      step_t()
-    } else {
-      step_t()
     }
+    step_t()
   }
   return out
 }
