@@ -1,0 +1,143 @@
+<html>
+<h1>Stardew Valley Mine Ladder Predictor</h1>
+Game ID: <input placeholder="(end of save file name)" id="seed" />
+Mine Level <input type="number" min="1" max="119" value="1" id="level" />
+<br>
+Luck buff <input type="number" min="0" max="5" value="0" id ="buff" />
+Luck <input type="number" min="-0.1" max="0.125" value="0" step="0.025" id="luck" />
+Monsters cleared <input type="checkbox" id="cleared" />
+<br>
+Ladder dropped if fewer rocks than:
+<span style="background-color:#ff0000">&infin;</span>
+<span style="background-color:#ff8800">100</span>
+<span style="background-color:#ffff00">50</span>
+<span style="background-color:#88ff44">20</span>
+
+<div id="container">
+  <img id="image" src="mines/1.png" />
+  <div id="overlay">
+    <div class="overlay" style="top:160px;left:160px"></div>
+  </div>
+</div>
+
+Inaccurate?
+<a href="https://github.com/rvcx/stardew-bubbles/issues">Report an issue!</a>
+
+<style>
+* { font-family: courier }
+#year { width: 3em }
+#container { position: relative }
+#image {
+  position: absolute
+  left: 0
+  top: 0
+}
+.overlay {
+  z-index: 100;
+  display: -webkit-flex;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: absolute;
+/*   color: white; */
+  width: 16px;
+  height: 16px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  border-radius: 2px;
+  background-color: red;
+  opacity: 0.4;
+}
+</style>
+
+<script>
+function rng(seed) {
+  "use strict"
+  let imax = 2147483647
+  var seeds = []
+  var mj = 161803398 - Math.abs(parseInt(seed))
+  seeds[55] = mj
+  var mk = 1
+  for (var i = 1; i < 55; ++i) {
+    var ii = (21 * i) % 55
+    seeds[ii] = mk
+    mk = mj - mk
+    if (mk < 0) { mk += imax }
+    mj = seeds[ii]
+  }
+  for (var j = 0; j < 4; ++j) {
+    for (var i = 1; i < 56; ++i) {
+      seeds[i] -= seeds[1 + (i + 30) % 55]
+      if (seeds[i] > imax) { seeds[i] -= (imax * 2 + 1) }
+      if (seeds[i] < 0) { seeds[i] += imax }
+    }
+  }
+  var inext = 0
+  var ip = 21
+  return function () {
+    inext %= 55
+    ip %= 55
+    ++inext;
+    ++ip;
+    var r = seeds[inext] - seeds[ip]
+    if (r == imax) { r -= 1 }
+    if (r < 0) { r += imax }
+    seeds[inext] = r
+    return r / imax
+  }
+}
+
+function computeOverlay() {
+  gid = parseInt(document.getElementById("seed").value)
+  level = parseInt(document.getElementById("level").value)
+  buff = parseInt(document.getElementById("buff").value)
+  luck = parseFloat(document.getElementById("luck").value)
+  cleared = document.getElementById("cleared").checked
+  img = document.getElementById("image")
+  width = img.width / 16
+  height = img.height / 16
+  divs = []
+  for (x = 0; x < width; ++x) {
+    for (y = 0; y < height; ++y) {
+      r = rng(x * 1000 + y + level + gid / 2)
+      r()
+      n = 0.02 + buff / 100 + luck / 5 + (cleared ? 0.04 : 0)
+      rocks = 1 / (r() - n)
+      color = "#000000"
+      if (rocks < 0) { color = "#ff0000" }
+      else if (rocks > 100) { color = "#ff8800" }
+      else if (rocks > 50) { color = "#ffff00" }
+      else if (rocks > 20) { color = "#88ff44" }
+      if (rocks < 0 || rocks > 20) {
+        divs.push(
+'<div class="overlay" style="left:' + x * 16 + 'px;top:' + y * 16 + 'px;background-color:' + color + '"></div>'
+        )
+      }
+    }
+  }
+  document.getElementById("overlay").innerHTML = divs.join("\n")
+}
+
+document.getElementById("image").onload = computeOverlay
+document.getElementById("level").onchange = function() {
+  document.getElementById("cleared").checked = false
+}
+
+function updateValue(e) {
+  level = parseInt(document.getElementById("level").value)
+  ilevel = level % 40
+  if (ilevel != 20 && ilevel % 10 == 0) { ilevel = 10 }
+  document.getElementById("image").src = "mines/" + ilevel + ".png"
+  computeOverlay()
+}
+
+let inputs = ["seed", "level", "buff", "luck", "cleared"]
+for (let i = 0; i < inputs.length; ++i) {
+  const input = document.getElementById(inputs[i]);
+  input.addEventListener("change", updateValue);
+}
+</script>
+
+</html>
