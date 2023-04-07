@@ -250,7 +250,7 @@ document.getElementById("location").innerHTML
   = [...Array(locations.length).keys()].map(locOption).join("\n")
 
 function time_as_string(t) {
-  return parseInt(t / 100).toString() + ":" + ("0" + (t % 100)).slice(-2)
+  return (parseInt(t / 100) % 24).toString() + ":" + ("0" + (t % 100)).slice(-2)
 }
 
 function updateValue(e) {
